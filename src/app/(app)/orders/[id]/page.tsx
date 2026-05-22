@@ -42,20 +42,23 @@ export default async function OrderDetailPage({
   ] as const;
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Link href="/orders" className="text-sm text-indigo-600 hover:underline mb-4 inline-block">
-        &larr; Back to Orders
+    <div className="max-w-3xl mx-auto animate-fade-in">
+      <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline mb-4">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Orders
       </Link>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex items-start justify-between mb-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{order.garment_type}</h1>
-            <p className="text-gray-500">
+            <p className="text-gray-500 mt-1">
               for{" "}
               <Link
                 href={`/customers/${customer?.id}`}
-                className="text-indigo-600 hover:underline"
+                className="text-indigo-600 hover:underline font-medium"
               >
                 {customer?.name ?? "Unknown"}
               </Link>
@@ -64,73 +67,72 @@ export default async function OrderDetailPage({
           <StatusBadge status={order.status as OrderStatus} />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500">Price</p>
-            <p className="font-semibold text-gray-900">Rs. {Number(order.price).toLocaleString()}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div className="bg-gray-50 rounded-xl p-3">
+            <p className="text-xs text-gray-500 uppercase font-medium">Price</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">Rs. {Number(order.price).toLocaleString()}</p>
           </div>
-          <div>
-            <p className="text-gray-500">Advance Paid</p>
-            <p className="font-semibold text-gray-900">Rs. {Number(order.advance_paid).toLocaleString()}</p>
+          <div className="bg-gray-50 rounded-xl p-3">
+            <p className="text-xs text-gray-500 uppercase font-medium">Advance</p>
+            <p className="text-lg font-bold text-gray-900 mt-1">Rs. {Number(order.advance_paid).toLocaleString()}</p>
           </div>
-          <div>
-            <p className="text-gray-500">Balance</p>
-            <p className={`font-semibold ${balance > 0 ? "text-red-600" : "text-green-600"}`}>
+          <div className={`rounded-xl p-3 ${balance > 0 ? "bg-red-50" : "bg-green-50"}`}>
+            <p className="text-xs text-gray-500 uppercase font-medium">Balance</p>
+            <p className={`text-lg font-bold mt-1 ${balance > 0 ? "text-red-600" : "text-green-600"}`}>
               {balance > 0 ? `Rs. ${balance.toLocaleString()}` : "Paid"}
             </p>
           </div>
           {order.fabric && (
-            <div>
-              <p className="text-gray-500">Fabric</p>
-              <p className="font-semibold text-gray-900">{order.fabric}</p>
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 uppercase font-medium">Fabric</p>
+              <p className="text-base font-semibold text-gray-900 mt-1">{order.fabric}</p>
             </div>
           )}
           {order.due_date && (
-            <div>
-              <p className="text-gray-500">Due Date</p>
-              <p className="font-semibold text-gray-900">
+            <div className="bg-gray-50 rounded-xl p-3">
+              <p className="text-xs text-gray-500 uppercase font-medium">Due Date</p>
+              <p className="text-base font-semibold text-gray-900 mt-1">
                 {new Date(order.due_date).toLocaleDateString()}
               </p>
             </div>
           )}
-          <div>
-            <p className="text-gray-500">Created</p>
-            <p className="font-semibold text-gray-900">
+          <div className="bg-gray-50 rounded-xl p-3">
+            <p className="text-xs text-gray-500 uppercase font-medium">Created</p>
+            <p className="text-base font-semibold text-gray-900 mt-1">
               {new Date(order.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
 
         {order.description && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-500">Description / Instructions</p>
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <p className="text-xs text-gray-500 uppercase font-medium">Description / Instructions</p>
             <p className="text-gray-900 mt-1">{order.description}</p>
           </div>
         )}
 
-        <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 pt-4 border-t border-gray-100">
           <UpdateStatusForm orderId={id} currentStatus={order.status as OrderStatus} />
         </div>
       </div>
 
-      {/* Measurement details */}
       {measurement && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
             Measurement: {measurement.label}
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {measurementFields.map(({ key, label }) => (
-              <div key={key}>
-                <p className="text-gray-500">{label}</p>
-                <p className="font-semibold text-gray-900">
+              <div key={key} className="bg-gray-50 rounded-xl p-3 text-center">
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className="text-base font-bold text-gray-900 mt-1">
                   {measurement[key] != null ? `${measurement[key]}"` : "—"}
                 </p>
               </div>
             ))}
           </div>
           {measurement.notes && (
-            <p className="mt-3 text-sm text-gray-500 italic">{measurement.notes}</p>
+            <p className="text-sm text-gray-500 mt-4 italic">{measurement.notes}</p>
           )}
         </div>
       )}

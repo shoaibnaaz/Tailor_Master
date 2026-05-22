@@ -5,12 +5,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { GARMENT_TYPES } from "@/lib/types";
+import { useToast } from "@/components/Toast";
+import Link from "next/link";
 import type { Customer, Measurement } from "@/lib/types";
 
 function NewOrderForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const { toast } = useToast();
 
   const preselectedCustomerId = searchParams.get("customer");
 
@@ -78,24 +81,36 @@ function NewOrderForm() {
       return;
     }
 
+    toast("Order created successfully");
     router.push("/orders");
     router.refresh();
   }
 
+  const inputClass = "block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all";
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto animate-fade-in">
+      <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline mb-4">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Orders
+      </Link>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Order</h1>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2 animate-slide-down">
+          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
         <div>
-          <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700">
-            Customer *
+          <label htmlFor="customer_id" className="block text-sm font-medium text-gray-700 mb-1">
+            Customer <span className="text-red-500">*</span>
           </label>
           <select
             id="customer_id"
@@ -103,7 +118,7 @@ function NewOrderForm() {
             required
             value={selectedCustomer}
             onChange={(e) => setSelectedCustomer(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className={inputClass}
           >
             <option value="">Select a customer</option>
             {customers.map((c) => (
@@ -116,14 +131,10 @@ function NewOrderForm() {
 
         {measurements.length > 0 && (
           <div>
-            <label htmlFor="measurement_id" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="measurement_id" className="block text-sm font-medium text-gray-700 mb-1">
               Measurement
             </label>
-            <select
-              id="measurement_id"
-              name="measurement_id"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            >
+            <select id="measurement_id" name="measurement_id" className={inputClass}>
               <option value="">None</option>
               {measurements.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -137,50 +148,45 @@ function NewOrderForm() {
         )}
 
         <div>
-          <label htmlFor="garment_type" className="block text-sm font-medium text-gray-700">
-            Garment Type *
+          <label htmlFor="garment_type" className="block text-sm font-medium text-gray-700 mb-1">
+            Garment Type <span className="text-red-500">*</span>
           </label>
-          <select
-            id="garment_type"
-            name="garment_type"
-            required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
+          <select id="garment_type" name="garment_type" required className={inputClass}>
             {GARMENT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
+              <option key={type} value={type}>{type}</option>
             ))}
           </select>
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
             Description / Special Instructions
           </label>
           <textarea
             id="description"
             name="description"
             rows={3}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="Any special instructions..."
+            className={`${inputClass} resize-none`}
           />
         </div>
 
         <div>
-          <label htmlFor="fabric" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="fabric" className="block text-sm font-medium text-gray-700 mb-1">
             Fabric
           </label>
           <input
             id="fabric"
             name="fabric"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            placeholder="e.g. Cotton, Silk, Wool"
+            className={inputClass}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-              Price (Rs.) *
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+              Price (Rs.) <span className="text-red-500">*</span>
             </label>
             <input
               id="price"
@@ -188,11 +194,12 @@ function NewOrderForm() {
               type="number"
               required
               min="0"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              placeholder="0"
+              className={inputClass}
             />
           </div>
           <div>
-            <label htmlFor="advance_paid" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="advance_paid" className="block text-sm font-medium text-gray-700 mb-1">
               Advance Paid (Rs.)
             </label>
             <input
@@ -201,20 +208,20 @@ function NewOrderForm() {
               type="number"
               min="0"
               defaultValue="0"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className={inputClass}
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="due_date" className="block text-sm font-medium text-gray-700 mb-1">
             Due Date
           </label>
           <input
             id="due_date"
             name="due_date"
             type="date"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className={inputClass}
           />
         </div>
 
@@ -222,14 +229,24 @@ function NewOrderForm() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-all disabled:opacity-50 shadow-sm"
           >
-            {loading ? "Creating..." : "Create Order"}
+            {loading ? (
+              <>
+                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Creating...
+              </>
+            ) : (
+              "Create Order"
+            )}
           </button>
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
@@ -241,7 +258,18 @@ function NewOrderForm() {
 
 export default function NewOrderPage() {
   return (
-    <Suspense fallback={<div className="max-w-2xl mx-auto"><p className="text-gray-500">Loading...</p></div>}>
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-1/3" />
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
       <NewOrderForm />
     </Suspense>
   );

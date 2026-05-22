@@ -1,17 +1,34 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase-client";
 import { useToast } from "@/components/Toast";
 import Link from "next/link";
+import type { Customer } from "@/lib/types";
 
-export default function NewCustomerPage() {
+export default function EditCustomerPage() {
   const router = useRouter();
+  const params = useParams();
   const supabase = createClient();
   const { toast } = useToast();
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      const { data } = await supabase
+        .from("customers")
+        .select("*")
+        .eq("id", params.id)
+        .single();
+      setCustomer(data);
+      setFetching(false);
+    }
+    load();
+  }, [supabase, params.id]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,22 +36,17 @@ export default function NewCustomerPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
-      setError("You must be logged in");
-      setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.from("customers").insert({
-      user_id: user.id,
-      name: formData.get("name") as string,
-      phone: formData.get("phone") as string,
-      email: (formData.get("email") as string) || null,
-      address: (formData.get("address") as string) || null,
-      notes: (formData.get("notes") as string) || null,
-    });
+    const { error } = await supabase
+      .from("customers")
+      .update({
+        name: formData.get("name") as string,
+        phone: formData.get("phone") as string,
+        email: (formData.get("email") as string) || null,
+        address: (formData.get("address") as string) || null,
+        notes: (formData.get("notes") as string) || null,
+      })
+      .eq("id", params.id);
 
     if (error) {
       setError(error.message);
@@ -42,20 +54,46 @@ export default function NewCustomerPage() {
       return;
     }
 
-    toast("Customer added successfully");
-    router.push("/customers");
+    toast("Customer updated successfully");
+    router.push(`/customers/${params.id}`);
     router.refresh();
+  }
+
+  if (fetching) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-6 bg-gray-200 rounded w-1/3" />
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-10 bg-gray-100 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-gray-500">Customer not found.</p>
+      </div>
+    );
   }
 
   return (
     <div className="max-w-2xl mx-auto animate-fade-in">
-      <Link href="/customers" className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline mb-4">
+      <Link
+        href={`/customers/${params.id}`}
+        className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline mb-4"
+      >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Back to Customers
+        Back to Customer
       </Link>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Customer</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Customer</h1>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2 animate-slide-down">
@@ -76,8 +114,8 @@ export default function NewCustomerPage() {
               id="name"
               name="name"
               required
-              placeholder="e.g. Ahmed Khan"
-              className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              defaultValue={customer.name}
+              className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
           </div>
           <div>
@@ -89,8 +127,8 @@ export default function NewCustomerPage() {
               name="phone"
               type="tel"
               required
-              placeholder="e.g. 0300-1234567"
-              className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+              defaultValue={customer.phone}
+              className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
           </div>
         </div>
@@ -103,8 +141,8 @@ export default function NewCustomerPage() {
             id="email"
             name="email"
             type="email"
-            placeholder="customer@example.com"
-            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            defaultValue={customer.email ?? ""}
+            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
           />
         </div>
 
@@ -116,8 +154,8 @@ export default function NewCustomerPage() {
             id="address"
             name="address"
             rows={2}
-            placeholder="Full address"
-            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+            defaultValue={customer.address ?? ""}
+            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
           />
         </div>
 
@@ -129,8 +167,8 @@ export default function NewCustomerPage() {
             id="notes"
             name="notes"
             rows={2}
-            placeholder="Any preferences or special notes..."
-            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+            defaultValue={customer.notes ?? ""}
+            className="block w-full rounded-xl border border-gray-300 px-3 py-2.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
           />
         </div>
 
@@ -149,7 +187,7 @@ export default function NewCustomerPage() {
                 Saving...
               </>
             ) : (
-              "Save Customer"
+              "Update Customer"
             )}
           </button>
           <button
